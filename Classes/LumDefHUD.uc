@@ -87,6 +87,38 @@ event PostRender()
         Super.PostRender();
 }
 
+function Vector GetMouseWorldLocation()
+{
+  local LumDefPlayerInput LumDefPlayerInput;
+  local Vector2D MousePosition;
+  local Vector MouseWorldOrigin, MouseWorldDirection, HitLocation, HitNormal;
+
+  // Ensure that we have a valid canvas and player owner
+  if (Canvas == None || PlayerOwner == None)
+  {
+    return Vect(0, 0, 0);
+  }
+
+  // Type cast to get the new player input
+  LumDefPlayerInput = LumDefPlayerInput(PlayerOwner.PlayerInput);
+
+  // Ensure that the player input is valid
+  if (LumDefPlayerInput == None)
+  {
+    return Vect(0, 0, 0);
+  }
+
+  // We stored the mouse position as an IntPoint, but it's needed as a Vector2D
+  MousePosition.X = LumDefPlayerInput.MousePosition.X;
+  MousePosition.Y = LumDefPlayerInput.MousePosition.Y;
+  // Deproject the mouse position and store it in the cached vectors
+  Canvas.DeProject(MousePosition, MouseWorldOrigin, MouseWorldDirection);
+
+  // Perform a trace to get the actual mouse world location.
+  Trace(HitLocation, HitNormal, MouseWorldOrigin + MouseWorldDirection * 65536.f, MouseWorldOrigin , true,,, TRACEFLAG_Bullet);
+  return HitLocation;
+}
+
 DefaultProperties
 {
         //Defimos por padrao a cor do cursor
