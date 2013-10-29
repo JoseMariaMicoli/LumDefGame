@@ -61,8 +61,8 @@ event PostRender()
         local LumDefPlayerInput LumDefPlayerInput;
 
         //Aseguramos que nao usamos scaleform e que temos uma textura valida para o cursor
-        if (!UsignScaleForm && CursorTexture != None)
-        {       
+        if (!UsingScaleForm && CursorTexture != None)
+        {
                 //Aseguramos que temos um PlayerOwner valido
                 if (PlayerOwner != None)
                 {
@@ -92,5 +92,5 @@ DefaultProperties
         CursorColor=(R=255, G=255, B=255, A=255)
         //Definimos por padrao a textura do cursor
         CursorTexture=Texture2D'LumDefContent.Textures.cursor_png'
-        UsignScaleForm=True;
+        UsingScaleForm=True;
 }
