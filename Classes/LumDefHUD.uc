@@ -17,6 +17,7 @@ simulated event PostBeginPlay()
         //Testamos se UsingScaleForm retorna True
         if (UsingScaleForm)
         {
+                LumDefCursorGFx = new () class'LumDefCursorGFx';
                 //Testamos se temos uma instancia valida de LumDefCursorGFx
                 if (LumDefCursorGFx != None)
                 {
