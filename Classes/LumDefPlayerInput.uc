@@ -19,9 +19,9 @@ event PlayerInput(float DeltaTime)
                 if (!LumDefHUD.UsingScaleForm)
                 {
                         //Adicionamos aMouseX a MousePosition e usamos Clamp para ajustalo com o tamanho da tela
-                        MousePosition.X = Clamp(MousePosition.X + aMouseX, 0, myHUD.SizeX);
+                        MousePosition.X = Clamp(MousePosition.X + aMouseX, 0, LumDefHUD.SizeX);
                         //Substraimos aMouseY a MousePosition e usamos Clamp para ajustalo com o tamanho da tela
-                        MousePosition.Y = Clamp(MousePosition.Y - aMouseY, 0, myHUD.SizeY);
+                        MousePosition.Y = Clamp(MousePosition.Y - aMouseY, 0, LumDefHUD.SizeY);
                 }
         }
 

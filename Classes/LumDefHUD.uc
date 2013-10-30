@@ -60,6 +60,8 @@ event PostRender()
 {
         //Variavel pronta para fazer cast a LumDefPlayerInput
         local LumDefPlayerInput LumDefPlayerInput;
+        
+        Super.PostRender();
 
         //Aseguramos que nao usamos scaleform e que temos uma textura valida para o cursor
         if (!UsingScaleForm && CursorTexture != None)
@@ -82,9 +84,6 @@ event PostRender()
                         }
                 }
         }
-
-        //Executamos o evento PostRender da classe mae
-        Super.PostRender();
 }
 
 function Vector GetMouseWorldLocation()
@@ -121,9 +120,9 @@ function Vector GetMouseWorldLocation()
 
 DefaultProperties
 {
+        UsingScaleForm=True;
         //Defimos por padrao a cor do cursor
         CursorColor=(R=255, G=255, B=255, A=255)
         //Definimos por padrao a textura do cursor
         CursorTexture=Texture2D'LumDefContent.Textures.cursor_png'
-        UsingScaleForm=True;
 }
