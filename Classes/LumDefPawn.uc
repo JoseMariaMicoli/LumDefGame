@@ -31,6 +31,19 @@ simulated event BecomeViewTarget( PlayerController PC )
    }
 }
 
+simulated singular event Rotator GetBaseAimRotation()
+{
+   local rotator   POVRot, tempRot;
+
+   tempRot = Rotation;
+   tempRot.Pitch = 0;
+   SetRotation(tempRot);
+   POVRot = Rotation;
+   POVRot.Pitch = 0;
+
+   return POVRot;
+}
+
 //play a footstep sound
 simulated event playfootstepsound (int footdown)
 {
