@@ -1,4 +1,4 @@
-class LumDefHUD extends HUD;
+class LumDefHUD extends UDKHUD;
 
 //Armazena a textura que representa o cursor na tela
 var const Texture2D CursorTexture;
@@ -23,7 +23,7 @@ simulated event PostBeginPlay()
                 {
                         LumDefCursorGFx.LumDefHUD = Self;
                         LumDefCursorGFx.SetTimingMode(TM_Game);
-                        
+
                         //Executamos a funcao Init de LumDefCursorGFx para iniciar o ScaleForm
                         LumDefCursorGFx.Init(class'Engine'.static.GetEngine().GamePlayers[LumDefCursorGFx.LocalPlayerOwnerIndex]);
                 }
@@ -60,7 +60,10 @@ event PostRender()
 {
         //Variavel pronta para fazer cast a LumDefPlayerInput
         local LumDefPlayerInput LumDefPlayerInput;
-        
+        //local instances of our camera and controller ready to cast
+	local LumDefCamera PlayerCam;
+        local LumDefPlayerController LumDefPlayerController;
+
         Super.PostRender();
 
         //Aseguramos que nao usamos scaleform e que temos uma textura valida para o cursor
@@ -84,38 +87,74 @@ event PostRender()
                         }
                 }
         }
+
+
+
+		LumDefPlayerController = LumDefPlayerController(PlayerOwner);
+		LumDefPlayerController.PlayerMouse = GetMouseCoordinates();
+
+		//from 2d mouse co-ordinates
+		Canvas.DeProject(LumDefPlayerController.Playermouse, LumDefPlayerController.MousePositionWorldLocation, LumDefPlayerController.MousePositionWorldNormal);
+		
+		//get a type casted reference to custom camera
+		Playercam = LumDefCamera(LumDefPlayerController.PlayerCamera);
+
+		//calculate the various of the mouse curson position.
+
+		//Set the ray direction as the mouseWorldnormal
+		LumDefPlayerController.rayDir = LumDefPlayerController.MousePositionWorldNormal;
+
+		//Start the trace at the player camera (isometric) + 100 unit z and a little offset in front of the camera (direction *10)
+		LumDefPlayerController.StartTrace = (PlayerCam.ViewTarget.POV.Location + Vect(0,0,100)) + LumDefPlayerController.raydir * 10;
+
+		//End this ray at start + the direction multiplied by given distance (5000 unit is far enough generally)
+		LumDefPlayerController.endtrace = LumDefPlayerController.StartTrace + LumDefPlayerController.Raydir * 5000;
+		
+		//Trace MouseHitWorldLocation each frame to world location (here you can get from the trace the actors that are hit by the trace, for the sake of this
+        //simple tutorial, we do noting with the result, but if you would filter clicks only on terrain, or if the player clicks on an npc, you would want to inspect
+        //the object hit in the StartFire function
+		LumDefPlayerController.TraceActor = trace(LumDefPlayerController.MouseHitWorldLocation, LumDefPlayerController.MouseHitWorldNormal, 
+			LumDefPlayerController.EndTrace, LumDefPlayerController.StartTrace, true);
+
+		//Calculate the pawn eye location for debug ray and for checking obstacles on click.
+		LumDefPlayerController.PawnEyeLocation = Pawn(PlayerOwner.ViewTarget).Location +
+			Pawn(PlayerOwner.ViewTarget).EyeHeight * Vect(0,0,1);
+
+		super.PostRender();
 }
 
-function Vector GetMouseWorldLocation()
+function vector2D GetMouseCoordinates()
 {
-  local LumDefPlayerInput LumDefPlayerInput;
-  local Vector2D MousePosition;
-  local Vector MouseWorldOrigin, MouseWorldDirection, HitLocation, HitNormal;
+        local Vector2D mousePos;
+		local string stringMessage;
+		local LumDefPlayerInput LocalPlayerInput;
 
-  // Ensure that we have a valid canvas and player owner
-  if (Canvas == None || PlayerOwner == None)
-  {
-    return Vect(0, 0, 0);
-  }
+		// Ensure that we have a valid PlayerOwner and CursorTexture
+		if (PlayerOwner != None)// && CursorTexture != None) 
+		{
+		// Cast to get the MouseInterfacePlayerInput
+			LocalPlayerInput = LumDefPlayerInput(PlayerOwner.PlayerInput);
+			mousePos.X = LocalPlayerInput.MousePosition.X;
+			mousePos.Y = LocalPlayerInput.MousePosition.Y;
+                        
+			stringMessage = mousePos.X@mousePos.Y;
+		}
 
-  // Type cast to get the new player input
-  LumDefPlayerInput = LumDefPlayerInput(PlayerOwner.PlayerInput);
+		Canvas.DrawColor = Makecolor(255,183,255,255);
+		Canvas.SetPos(250,40);
+		Canvas.DrawText(stringMessage, false,,,Textrenderinfo);
 
-  // Ensure that the player input is valid
-  if (LumDefPlayerInput == None)
-  {
-    return Vect(0, 0, 0);
-  }
+        return mousePos;
+}
 
-  // We stored the mouse position as an IntPoint, but it's needed as a Vector2D
-  MousePosition.X = LumDefPlayerInput.MousePosition.X;
-  MousePosition.Y = LumDefPlayerInput.MousePosition.Y;
-  // Deproject the mouse position and store it in the cached vectors
-  Canvas.DeProject(MousePosition, MouseWorldOrigin, MouseWorldDirection);
+//return screen size
+function vector2D getScreenSize()
+{
+		local Vector2D screenDimensions;		
+		ScreenDimensions.X = Canvas.SizeX;
+		ScreenDimensions.Y = Canvas.SizeY;
 
-  // Perform a trace to get the actual mouse world location.
-  Trace(HitLocation, HitNormal, MouseWorldOrigin + MouseWorldDirection * 65536.f, MouseWorldOrigin , true,,, TRACEFLAG_Bullet);
-  return HitLocation;
+		return screenDimensions;
 }
 
 DefaultProperties
