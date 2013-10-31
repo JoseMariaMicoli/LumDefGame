@@ -1,4 +1,4 @@
-class LumDefHUD extends UDKHUD;
+class LumDefHUD extends HUD;
 
 //Armazena a textura que representa o cursor na tela
 var const Texture2D CursorTexture;
@@ -60,7 +60,7 @@ event PostRender()
 {
         //Variavel pronta para fazer cast a LumDefPlayerInput
         local LumDefPlayerInput LumDefPlayerInput;
-        //local instances of our camera and controller ready to cast
+        //Instancias locais de LumDefCamera e LumDefPlayerController prontas para type cast
 	local LumDefCamera PlayerCam;
         local LumDefPlayerController LumDefPlayerController;
 
@@ -89,76 +89,68 @@ event PostRender()
         }
 
 
+        //Type cast de player controller aqui
+	LumDefPlayerController = LumDefPlayerController(PlayerOwner);
+	LumDefPlayerController.PlayerMouse = GetMouseCoordinates();
 
-		LumDefPlayerController = LumDefPlayerController(PlayerOwner);
-		LumDefPlayerController.PlayerMouse = GetMouseCoordinates();
+	//Canvas.DeProject das cordenadas 2D do cursor
+	Canvas.DeProject(LumDefPlayerController.Playermouse, LumDefPlayerController.MousePositionWorldLocation, LumDefPlayerController.MousePositionWorldNormal);
 
-		//from 2d mouse co-ordinates
-		Canvas.DeProject(LumDefPlayerController.Playermouse, LumDefPlayerController.MousePositionWorldLocation, LumDefPlayerController.MousePositionWorldNormal);
-		
-		//get a type casted reference to custom camera
-		Playercam = LumDefCamera(LumDefPlayerController.PlayerCamera);
+	//Type cast de LumDefCamera aqui
+	Playercam = LumDefCamera(LumDefPlayerController.PlayerCamera);
 
-		//calculate the various of the mouse curson position.
+	//Calcula a variacao da posicao do cursor
+	//Definimos a direcao do raio para mouseWorldnormal
+	LumDefPlayerController.rayDir = LumDefPlayerController.MousePositionWorldNormal;
 
-		//Set the ray direction as the mouseWorldnormal
-		LumDefPlayerController.rayDir = LumDefPlayerController.MousePositionWorldNormal;
+	//Iniciamos o trace para a player camera(Isometrica) + 100 unidades em z e uma correcao no frente da camera de (direction *10)
+	LumDefPlayerController.StartTrace = (PlayerCam.ViewTarget.POV.Location + Vect(0,0,100)) + LumDefPlayerController.raydir * 10;
 
-		//Start the trace at the player camera (isometric) + 100 unit z and a little offset in front of the camera (direction *10)
-		LumDefPlayerController.StartTrace = (PlayerCam.ViewTarget.POV.Location + Vect(0,0,100)) + LumDefPlayerController.raydir * 10;
+	//Finalizamos este raio no inicio +  direção multiplicada pela distância determinada(5000 unidade é o suficiente em geral)
+	LumDefPlayerController.endtrace = LumDefPlayerController.StartTrace + LumDefPlayerController.Raydir * 5000;
 
-		//End this ray at start + the direction multiplied by given distance (5000 unit is far enough generally)
-		LumDefPlayerController.endtrace = LumDefPlayerController.StartTrace + LumDefPlayerController.Raydir * 5000;
-		
-		//Trace MouseHitWorldLocation each frame to world location (here you can get from the trace the actors that are hit by the trace, for the sake of this
-        //simple tutorial, we do noting with the result, but if you would filter clicks only on terrain, or if the player clicks on an npc, you would want to inspect
-        //the object hit in the StartFire function
-		LumDefPlayerController.TraceActor = trace(LumDefPlayerController.MouseHitWorldLocation, LumDefPlayerController.MouseHitWorldNormal, 
-			LumDefPlayerController.EndTrace, LumDefPlayerController.StartTrace, true);
+	//E feito o traco a cada frame para verificar sobre qual objeto do senario o jogador clico com cursor atravez do exec startfire (MouseWorldLocation aqui)
+	LumDefPlayerController.TraceActor = trace(LumDefPlayerController.MouseHitWorldLocation, LumDefPlayerController.MouseHitWorldNormal,
+	LumDefPlayerController.EndTrace, LumDefPlayerController.StartTrace, true);
 
-		//Calculate the pawn eye location for debug ray and for checking obstacles on click.
-		LumDefPlayerController.PawnEyeLocation = Pawn(PlayerOwner.ViewTarget).Location +
-			Pawn(PlayerOwner.ViewTarget).EyeHeight * Vect(0,0,1);
+	//Calcula o pawn eye location para debugar o raio e para verificar se a obstaculos no local clicado
+	LumDefPlayerController.PawnEyeLocation = Pawn(PlayerOwner.ViewTarget).Location +
+	Pawn(PlayerOwner.ViewTarget).EyeHeight * Vect(0,0,1);
 
-		super.PostRender();
+	super.PostRender();
 }
 
+//Retorna as cordenadas 2D do mouse
 function vector2D GetMouseCoordinates()
 {
         local Vector2D mousePos;
-		local string stringMessage;
-		local LumDefPlayerInput LocalPlayerInput;
+	local LumDefPlayerInput LocalPlayerInput;
 
-		// Ensure that we have a valid PlayerOwner and CursorTexture
-		if (PlayerOwner != None)// && CursorTexture != None) 
-		{
-		// Cast to get the MouseInterfacePlayerInput
-			LocalPlayerInput = LumDefPlayerInput(PlayerOwner.PlayerInput);
-			mousePos.X = LocalPlayerInput.MousePosition.X;
-			mousePos.Y = LocalPlayerInput.MousePosition.Y;
-                        
-			stringMessage = mousePos.X@mousePos.Y;
-		}
-
-		Canvas.DrawColor = Makecolor(255,183,255,255);
-		Canvas.SetPos(250,40);
-		Canvas.DrawText(stringMessage, false,,,Textrenderinfo);
+	//Asseguramos que temos um PlayerController valido
+	if (PlayerOwner != None)
+	{
+		//Type cast para LumDefPlayerInput
+		LocalPlayerInput = LumDefPlayerInput(PlayerOwner.PlayerInput);
+		mousePos.X = LocalPlayerInput.MousePosition.X;
+		mousePos.Y = LocalPlayerInput.MousePosition.Y;
+	}
 
         return mousePos;
 }
 
-//return screen size
+//Retorna o tamanho da tela
 function vector2D getScreenSize()
 {
-		local Vector2D screenDimensions;		
-		ScreenDimensions.X = Canvas.SizeX;
-		ScreenDimensions.Y = Canvas.SizeY;
+	local Vector2D screenDimensions;
+	ScreenDimensions.X = Canvas.SizeX;
+	ScreenDimensions.Y = Canvas.SizeY;
 
-		return screenDimensions;
+	return screenDimensions;
 }
 
 DefaultProperties
 {
+        //Definimos por padrao usar o cursor em ScaleForm
         UsingScaleForm=True;
         //Defimos por padrao a cor do cursor
         CursorColor=(R=255, G=255, B=255, A=255)

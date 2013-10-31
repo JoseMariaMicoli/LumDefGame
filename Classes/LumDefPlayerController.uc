@@ -1,40 +1,32 @@
-class LumDefPlayerController extends UDKPlayerController;
+class LumDefPlayerController extends PlayerController;
 
-var Vector2D    PlayerMouse;                //Hold calculated mouse position (this is calculated in HUD)
+var Vector2D PlayerMouse; //Guarda a posicao 2D do cursor calculada em LumDefHUD
+var Actor TraceActor; //Aqui guardamos o nome do actor pego pela funcao trace do click do cursor, caso tenha algum é claro
 
-var Actor TraceActor;       //this is the name of the object under the mouse cursor... if there is one.
-
-//mouse locations and normalised vectors
+//Localizacao do cursor e vetores normalizados
 var Vector  MouseHitWorldLocation;
 var Vector  MouseHitWorldNormal;
-
 var Vector  MousePositionWorldLocation;
 var Vector  MousePositionWorldNormal;
 
-//where our pawn was looking last
+//Para onde o pawn estava olhando a ultima vez
 var Vector  LastLookLocation;
-
 var vector PawnEyeLocation;
 
-//ray tracing
+//variaves para ray tracing
 var Vector rayDir;
-
 var Vector StartTrace;
 var Vector EndTrace;
-
 var float DistanceRemaining;
 var bool bPawnNearDestination;
 
-//======================================================
-// Mouse clicking variables
-
-var bool bLeftMousePressed; //leftmouse button 
-var bool bRightMousePressed; //rightmouse button
-
+//Variaveis do click do mouse
+var bool bLeftMousePressed; //Botao Esquerdo apertado
+var bool bRightMousePressed; //Botao Direito apertado
 var float totalDeltaTime;
-
 var float ClickSensitivity;
 
+//funcao tick
 event PlayerTick(float DeltaTime)
 {
         Super.PlayerTick(DeltaTime);
@@ -47,7 +39,7 @@ event PlayerTick(float DeltaTime)
 
 		if(totalDeltaTime >= ClickSensitivity)
 		{
-			//hold mouse click function
+			//Funcao segurar o botao do mouse
 			if(!IsInState('MoveMousePressedAndHold'))
                         {
                                 `Log("Pushed MoveMousePressedAndHold state");
@@ -64,13 +56,14 @@ event PlayerTick(float DeltaTime)
                         }
 		}
 	}
-	
+
 	if(!isinstate('MoveMouseClick'))
 	{
 		Pawn.SetRotation(Rotator(LastLookLocation));
 	}
 }
 
+//Exec function correspondente ao binding StartFire do botao direito e esquerdo quando apertados
 exec function StartFire(optional byte FireModeNum)
 {
 
@@ -94,7 +87,7 @@ exec function StartFire(optional byte FireModeNum)
 	if(bRightMousePressed) `Log("Right Mouse Pressed");
 }
 
-//for long presses
+//Exec function correspondente ao binging StopFire do botao esquerdo e direito quando soltos
 simulated function Stopfire(optional byte FiremodeNum )
 {
 	if(bLeftMousePressed && FiremodeNum == 0)
@@ -124,7 +117,7 @@ simulated function Stopfire(optional byte FiremodeNum )
 	totalDeltaTime = 0;
 }
 
-
+//Funcao MovePawnToDestination aqui
 function MovePawnToDestination()
 {
 	SetDestinationPosition(MouseHitWorldLocation);
@@ -132,7 +125,7 @@ function MovePawnToDestination()
 }
 
 
-//BEGIN STATE BASED MOVEMENT HERE
+//Aqui comecao os estados de movimento
 state MoveMouseClick
 {
 	event PoppedState()
@@ -183,7 +176,7 @@ function StopLingering()
 	PopState(true);
 }
 
-//handle the move function
+//Controla a funcao do movimento do player no cenario
 function PlayerMove(float deltatime)
 {
 	local Vector PawnXYLocation; //where our pawn is
@@ -226,9 +219,10 @@ function ProcessViewRotation(float DeltaTime, out rotator out_ViewRotation, rota
 
 DefaultProperties
 {
+        //Definimos nossa propria classe Camera
         CameraClass=class'LumDefGame.LumDefCamera'
         //Definimous nossa propria classe PlayerInput
         InputClass=class'LumDefGame.LumDefPlayerInput'
-        
+        //Definimos um valor padrao para a sensivilidade do click
         ClickSensitivity = 0.20f
 }

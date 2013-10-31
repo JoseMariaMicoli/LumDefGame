@@ -6,45 +6,47 @@ simulated function PostBeginPlay()
         `Log("\n\nLumDefPawn its up!\n");
 }
 
+//Esta funcao assina a camera isometrica por padrao
 simulated function name GetDefaultCameraMode( PlayerController RequestedBy )
 {
-return 'Isometric';
+        return 'Isometric';
 }
 
-//override to make player mesh visible by default
+//Sobrescrevemos este evento para deixar a malha do player visivel todo tempo
 simulated event BecomeViewTarget( PlayerController PC )
 {
-   local UTPlayerController UTPC;
+        local UTPlayerController UTPC;
 
-   Super.BecomeViewTarget(PC);
+        Super.BecomeViewTarget(PC);
 
-   if (LocalPlayer(PC.Player) != None)
-   {
-      UTPC = UTPlayerController(PC);
-      if (UTPC != None)
-      {
-         //set player controller to behind view and make mesh visible
-         UTPC.SetBehindView(true);
-        // SetMeshVisibility(UTPC.bBehindView); 
-         UTPC.bNoCrosshair = true;
-      }
-   }
+        if (LocalPlayer(PC.Player) != None)
+        {
+                UTPC = UTPlayerController(PC);
+                if (UTPC != None)
+                {
+                        //Define o PlayerController para traz da visao e deixa a malha do Pawn visivel
+                        UTPC.SetBehindView(true);
+                        //Remove a mira
+                        UTPC.bNoCrosshair = true;
+                }
+        }
 }
 
+//Funca que pega a rotacao do Pawn
 simulated singular event Rotator GetBaseAimRotation()
 {
-   local rotator   POVRot, tempRot;
+        local rotator   POVRot, tempRot;
 
-   tempRot = Rotation;
-   tempRot.Pitch = 0;
-   SetRotation(tempRot);
-   POVRot = Rotation;
-   POVRot.Pitch = 0;
+        tempRot = Rotation;
+        tempRot.Pitch = 0;
+        SetRotation(tempRot);
+        POVRot = Rotation;
+        POVRot.Pitch = 0;
 
-   return POVRot;
+        return POVRot;
 }
 
-//play a footstep sound
+//Inicia o som de passos ao player andar
 simulated event playfootstepsound (int footdown)
 {
 	local SoundCue Footsound;
@@ -65,7 +67,7 @@ DefaultProperties
         End Object
         Components.Add(MyLightEnvironment)
 
-    Begin Object Class=SkeletalMeshComponent Name=InitialSkeletalMesh
+        Begin Object Class=SkeletalMeshComponent Name=InitialSkeletalMesh
                 CastShadow=true
                 bCastDynamicShadow=true
                 bOwnerNoSee=false

@@ -1,5 +1,7 @@
 class LumDefCamera extends Camera;
 
+/*Sobrescrevemos esta funcao da classe mae Camera apenas para mudar os valores das variaveis
+porem o resto fica praticamente identica a funcao da classe mae*/
 function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 {
         local vector            Loc, Pos, HitLocation, HitNormal;
