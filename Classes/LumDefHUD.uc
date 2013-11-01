@@ -9,8 +9,28 @@ var bool UsingScaleForm;
 //variavel pronta para cast de LumDefCursorGFx
 var LumDefCursorGFx LumDefCursorGFx;
 
+// Pending left mouse button pressed event
 var bool PendingLeftPressed;
+// Pending left mouse button released event
 var bool PendingLeftReleased;
+// Pending right mouse button pressed event
+var bool PendingRightPressed;
+// Pending right mouse button released event
+var bool PendingRightReleased;
+// Pending middle mouse button pressed event
+var bool PendingMiddlePressed;
+// Pending middle mouse button released event
+var bool PendingMiddleReleased;
+// Pending mouse wheel scroll up event
+var bool PendingScrollUp;
+// Pending mouse wheel scroll down event
+var bool PendingScrollDown;
+// Cached mouse world origin
+var Vector CachedMouseWorldOrigin;
+// Cached mouse world direction
+var Vector CachedMouseWorldDirection;
+// Last mouse interaction interface
+var LumDefMouseInteractionInterface LastMouseInteractionInterface;
 
 simulated event PostBeginPlay()
 {
@@ -144,6 +164,8 @@ event PostRender()
         //Instancias locais de LumDefCamera e LumDefPlayerController prontas para type cast
 	local LumDefCamera PlayerCam;
         local LumDefPlayerController LumDefPlayerController;
+        local LumDefMouseInteractionInterface MouseInteractionInterface;
+        local Vector HitLocation, HitNormal;
 
         Super.PostRender();
 
@@ -198,10 +220,202 @@ event PostRender()
 	LumDefPlayerController.PawnEyeLocation = Pawn(PlayerOwner.ViewTarget).Location +
 	Pawn(PlayerOwner.ViewTarget).EyeHeight * Vect(0,0,1);
 
+        // Get the current mouse interaction interface
+  MouseInteractionInterface = GetMouseActor(HitLocation, HitNormal);
+
+  // Handle mouse over and mouse out
+  // Did we previously had a mouse interaction interface?
+  if (LastMouseInteractionInterface != None)
+  {
+    // If the last mouse interaction interface differs to the current mouse interaction
+    if (LastMouseInteractionInterface != MouseInteractionInterface)
+    {
+      // Call the mouse out function
+      LastMouseInteractionInterface.MouseOut(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+      // Assign the new mouse interaction interface
+      LastMouseInteractionInterface = MouseInteractionInterface; 
+
+      // If the last mouse interaction interface is not none
+      if (LastMouseInteractionInterface != None)
+      {
+        // Call the mouse over function
+        LastMouseInteractionInterface.MouseOver(CachedMouseWorldOrigin, CachedMouseWorldDirection); // Call mouse over
+      }
+    }
+  }
+  else if (MouseInteractionInterface != None)
+  {
+    // Assign the new mouse interaction interface
+    LastMouseInteractionInterface = MouseInteractionInterface; 
+    // Call the mouse over function
+    LastMouseInteractionInterface.MouseOver(CachedMouseWorldOrigin, CachedMouseWorldDirection); 
+  }
+
+  if (LastMouseInteractionInterface != None)
+  {
+    // Handle left mouse button
+    if (PendingLeftPressed)
+    {
+      if (PendingLeftReleased)
+      {
+        // This is a left click, so discard
+        PendingLeftPressed = false;
+        PendingLeftReleased = false;
+      }
+      else
+      {
+        // Left is pressed
+        PendingLeftPressed = false;
+        LastMouseInteractionInterface.MouseLeftPressed(CachedMouseWorldOrigin, CachedMouseWorldDirection, HitLocation, HitNormal);
+      }
+    }
+    else if (PendingLeftReleased)
+    {
+      // Left is released
+      PendingLeftReleased = false;
+      LastMouseInteractionInterface.MouseLeftReleased(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+    }
+
+    // Handle right mouse button
+    if (PendingRightPressed)
+    {
+      if (PendingRightReleased)
+      {
+        // This is a right click, so discard
+        PendingRightPressed = false;
+        PendingRightReleased = false;
+      }
+      else
+      {
+        // Right is pressed
+        PendingRightPressed = false;
+        LastMouseInteractionInterface.MouseRightPressed(CachedMouseWorldOrigin, CachedMouseWorldDirection, HitLocation, HitNormal);
+      }
+    }
+    else if (PendingRightReleased)
+    {
+      // Right is released
+      PendingRightReleased = false;
+      LastMouseInteractionInterface.MouseRightReleased(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+    }
+
+    // Handle middle mouse button
+    if (PendingMiddlePressed)
+    {
+      if (PendingMiddleReleased)
+      {
+        // This is a middle click, so discard 
+        PendingMiddlePressed = false;
+        PendingMiddleReleased = false;
+      }
+      else
+      {
+        // Middle is pressed
+        PendingMiddlePressed = false;
+        LastMouseInteractionInterface.MouseMiddlePressed(CachedMouseWorldOrigin, CachedMouseWorldDirection, HitLocation, HitNormal);
+      }
+    }
+    else if (PendingMiddleReleased)
+    {
+      PendingMiddleReleased = false;
+      LastMouseInteractionInterface.MouseMiddleReleased(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+    }
+
+    // Handle middle mouse button scroll up
+    if (PendingScrollUp)
+    {
+      PendingScrollUp = false;
+      LastMouseInteractionInterface.MouseScrollUp(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+    }
+
+    // Handle middle mouse button scroll down
+    if (PendingScrollDown)
+    {
+      PendingScrollDown = false;
+      LastMouseInteractionInterface.MouseScrollDown(CachedMouseWorldOrigin, CachedMouseWorldDirection);
+    }
+  }
+
         //draw our hud
 	DrawHUD();
 
 	super.PostRender();
+}
+
+function LumDefMouseInteractionInterface GetMouseActor(optional out Vector HitLocation, optional out Vector HitNormal)
+{
+  local LumDefMouseInteractionInterface MouseInteractionInterface;
+  local LumDefPlayerInput LumDefPlayerInput;
+  local Vector2D MousePosition;
+  local Actor HitActor;
+
+  // Ensure that we have a valid canvas and player owner
+  if (Canvas == None || PlayerOwner == None)
+  {
+    return None;
+  }
+
+  // Type cast to get the new player input
+  LumDefPlayerInput = LumDefPlayerInput(PlayerOwner.PlayerInput);
+
+  // Ensure that the player input is valid
+  if (LumDefPlayerInput == None)
+  {
+    return None;
+  }
+
+  // We stored the mouse position as an IntPoint, but it's needed as a Vector2D
+  MousePosition.X = LumDefPlayerInput.MousePosition.X;
+  MousePosition.Y = LumDefPlayerInput.MousePosition.Y;
+  // Deproject the mouse position and store it in the cached vectors
+  Canvas.DeProject(MousePosition, CachedMouseWorldOrigin, CachedMouseWorldDirection);
+
+  // Perform a trace actor interator. An interator is used so that we get the top most mouse interaction
+  // interface. This covers cases when other traceable objects (such as static meshes) are above mouse
+  // interaction interfaces.
+  ForEach TraceActors(class'Actor', HitActor, HitLocation, HitNormal, CachedMouseWorldOrigin + CachedMouseWorldDirection * 65536.f, CachedMouseWorldOrigin,,, TRACEFLAG_Bullet)
+  {
+    // Type cast to see if the HitActor implements that mouse interaction interface
+    MouseInteractionInterface = LumDefMouseInteractionInterface(HitActor);
+    if (MouseInteractionInterface != None)
+    {
+      return MouseInteractionInterface;
+    }
+  }
+
+  return None;
+}
+
+function Vector GetMouseWorldLocation()
+{
+  local LumDefPlayerInput LumDefPlayerInput;
+  local Vector2D MousePosition;
+  local Vector MouseWorldOrigin, MouseWorldDirection, HitLocation, HitNormal;
+
+  // Ensure that we have a valid canvas and player owner
+  if (Canvas == None || PlayerOwner == None)
+  {
+    return Vect(0, 0, 0);
+  }
+
+  // Type cast to get the new player input
+  LumDefPlayerInput = LumDefPlayerInput(PlayerOwner.PlayerInput);
+
+  // Ensure that the player input is valid
+  if (LumDefPlayerInput == None)
+  {
+    return Vect(0, 0, 0);
+  }
+
+  // We stored the mouse position as an IntPoint, but it's needed as a Vector2D
+  MousePosition.X = LumDefPlayerInput.MousePosition.X;
+  MousePosition.Y = LumDefPlayerInput.MousePosition.Y;
+  // Deproject the mouse position and store it in the cached vectors
+  Canvas.DeProject(MousePosition, MouseWorldOrigin, MouseWorldDirection);
+
+  // Perform a trace to get the actual mouse world location.
+  Trace(HitLocation, HitNormal, MouseWorldOrigin + MouseWorldDirection * 65536.f, MouseWorldOrigin , true,,, TRACEFLAG_Bullet);
+  return HitLocation;
 }
 
 //Retorna as cordenadas 2D do mouse

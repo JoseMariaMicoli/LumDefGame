@@ -4,6 +4,21 @@ simulated function PostBeginPlay()
 {
         Super.PostBeginPlay();
         `Log("\n\nLumDefPawn its up!\n");
+        SpawnDefaultController();
+        AddDefaultInventory();
+
+}
+
+function AddDefaultInventory()
+{
+local Weapon newWeapon;
+newWeapon = Spawn(class'LumDefWeaponTeste',,,self.Location);
+if (newWeapon != none)
+{
+newWeapon.GiveTo(Controller.Pawn);
+newWeapon.bCanThrow = false; // don't allow default weapon to be thrown out
+Controller.ClientSwitchToBestWeapon();
+}
 }
 
 //Esta funcao assina a camera isometrica por padrao

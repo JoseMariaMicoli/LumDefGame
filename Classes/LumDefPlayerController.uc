@@ -48,14 +48,21 @@ var int ManaPower;
 enum EMouseEvent
 {
   LeftMouseButton,
-  RightMouseButton
+  RightMouseButton,
+  MiddleMouseButton,
+  ScrollWheelUp,
+  ScrollWheelDown,
 };
 
 
+
+
+// Handle mouse inputs
 function HandleMouseInput(EMouseEvent MouseEvent, EInputEvent InputEvent)
 {
+
   // Type cast to get our HUD
- LumDefHUD = LumDefHUD(myHUD);
+  LumDefHUD = LumDefHUD(myHUD);
 
   if (LumDefHUD != None)
   {
@@ -63,19 +70,30 @@ function HandleMouseInput(EMouseEvent MouseEvent, EInputEvent InputEvent)
     if (InputEvent == IE_Pressed)
     {
       // Handle pressed event
-       switch (MouseEvent)
-       {
-         case LeftMouseButton:
-         LumDefHUD.PendingLeftPressed = true;
-         break;
+      switch (MouseEvent)
+      {
+        case LeftMouseButton:
+     LumDefHUD.PendingLeftPressed = true;
+     break;
 
-         case RightMouseButton:
-         
-         break;
+   case RightMouseButton:
+     LumDefHUD.PendingRightPressed = true;
+     break;
 
-         default:
+   case MiddleMouseButton:
+     LumDefHUD.PendingMiddlePressed = true;
+     break;
 
-         break;
+   case ScrollWheelUp:
+     LumDefHUD.PendingScrollUp = true;
+     break;
+
+   case ScrollWheelDown:
+     LumDefHUD.PendingScrollDown = true;
+     break;
+
+   default:
+     break;
       }
     }
     else if (InputEvent == IE_Released)
@@ -83,18 +101,20 @@ function HandleMouseInput(EMouseEvent MouseEvent, EInputEvent InputEvent)
       // Handle released event
       switch (MouseEvent)
       {
-         case LeftMouseButton:
-         LumDefHUD.PendingLeftReleased = true;
-         LumDefHUD.PendingLeftPressed = false;
-         break;
-         
-         case RightMouseButton:
-         
-         break;
+        case LeftMouseButton:
+     LumDefHUD.PendingLeftReleased = true;
+     break;
 
-         default:
+   case RightMouseButton:
+     LumDefHUD.PendingRightReleased = true;
+     break;
 
-         break;
+   case MiddleMouseButton:
+     LumDefHUD.PendingMiddleReleased = true;
+     break;
+
+   default:
+     break;
       }
     }
   }
@@ -246,6 +266,30 @@ exec function Stopfire(optional byte FiremodeNum )
 	if(bPawnNearDestination){PopState();}
 
 	totalDeltaTime = 0;
+}
+
+// Called when the middle mouse button is pressed
+exec function MiddleMousePressed()
+{
+  HandleMouseInput(MiddleMouseButton, IE_Pressed);
+}
+
+// Called when the middle mouse button is released
+exec function MiddleMouseReleased()
+{
+  HandleMouseInput(MiddleMouseButton, IE_Released);
+}
+
+// Called when the middle mouse wheel is scrolled up
+exec function MiddleMouseScrollUp()
+{
+  HandleMouseInput(ScrollWheelUp, IE_Pressed);
+}
+
+// Called when the middle mouse wheel is scrolled down
+exec function MiddleMouseScrollDown()
+{
+  HandleMouseInput(ScrollWheelDown, IE_Pressed);
 }
 
 //Funcao MovePawnToDestination aqui

@@ -1,6 +1,18 @@
 class LumDefGameInfo extends GameInfo
         config(LumDef);
 
+//Create inventory
+var array< class <Inventory> > DefaultInventory; 
+
+//Add default items to inventory of PlayerPawn
+function AddDefaultInventory( pawn PlayerPawn )
+{
+    if(PlayerPawn.IsHumanControlled() )
+    {
+        PlayerPawn.CreateInventory(class'LumDefWeaponTeste',false);
+    }
+}
+
 // Function that is executed after each kill
 function ScoreKill(Controller Killer, Controller Other)
 {
