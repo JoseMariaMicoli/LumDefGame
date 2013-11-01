@@ -1,5 +1,7 @@
 class LumDefPlayerController extends PlayerController;
 
+var LumDefHUD LumDefHUD;
+
 var Vector2D PlayerMouse; //Guarda a posicao 2D do cursor calculada em LumDefHUD
 var Actor TraceActor; //Aqui guardamos o nome do actor pego pela funcao trace do click do cursor, caso tenha algum é claro
 
@@ -26,10 +28,140 @@ var bool bRightMousePressed; //Botao Direito apertado
 var float totalDeltaTime;
 var float ClickSensitivity;
 
+// XP SYSTEM
+const MAX_LEVEL = 50;
+const XP_INCREMENT = 500; // Amount of XP that is added to the amount of XP required for a level, after each level progression
+ 
+var int XP; // Total amount of gathered XP
+var int Level; // Current level
+var int XPGatheredForNextLevel; // Amount of XP gathered for the next level
+var int XPRequiredForNextLevel; // Amount of XP required for the next level
+
+// STATS SYSTEM
+var int StatPoints; // Stat Points Given at level
+var int Strength;
+var int Dexterity;
+var int Intelligence;
+var int ManaPower;
+
+// Mouse event enum
+enum EMouseEvent
+{
+  LeftMouseButton,
+  RightMouseButton
+};
+
+
+function HandleMouseInput(EMouseEvent MouseEvent, EInputEvent InputEvent)
+{
+  // Type cast to get our HUD
+ LumDefHUD = LumDefHUD(myHUD);
+
+  if (LumDefHUD != None)
+  {
+    // Detect what kind of input this is
+    if (InputEvent == IE_Pressed)
+    {
+      // Handle pressed event
+       switch (MouseEvent)
+       {
+         case LeftMouseButton:
+         LumDefHUD.PendingLeftPressed = true;
+         break;
+
+         case RightMouseButton:
+         
+         break;
+
+         default:
+
+         break;
+      }
+    }
+    else if (InputEvent == IE_Released)
+    {
+      // Handle released event
+      switch (MouseEvent)
+      {
+         case LeftMouseButton:
+         LumDefHUD.PendingLeftReleased = true;
+         LumDefHUD.PendingLeftPressed = false;
+         break;
+         
+         case RightMouseButton:
+         
+         break;
+
+         default:
+
+         break;
+      }
+    }
+  }
+}
+
+simulated function PostBeginPlay()
+{
+        super.postbeginplay();
+
+	// XP SYSTEM
+	CalculateLevelProgress();
+}
+
+// XP SYSTEM FUNCTIONS BEGIN
+// The function that is called from Kismet
+public function AddXP(SeqAct_GiveXP action)
+{
+	GiveXP(action.Amount); // Give the player the amount of XP specified in the Kismet action
+}
+
+public function GiveXP(int amount)
+{
+	XP += amount;
+
+	CalculateLevelProgress();
+
+	while (XPGatheredForNextLevel >= XPRequiredForNextLevel && Level < MAX_LEVEL)
+	{
+		Level++;
+		StatPoints++;
+		StatPoints++;
+		StatPoints++;
+		StatPoints++;
+		StatPoints++;
+		CalculateAbilitiesProgress();
+		// Recalculate level progress after leveling up
+		CalculateLevelProgress();
+	}
+}
+
+private function CalculateAbilitiesProgress()
+{
+                Strength +=50;
+                Dexterity += 50;
+                Intelligence += 50;
+                ManaPower += 50;
+}
+
+private function CalculateLevelProgress()
+{
+	local int xpToCurrentLevel; // Total amount of XP gathered with current and previous levels
+	
+	xpToCurrentLevel = 0.5*Level*(Level-1)*XP_INCREMENT;
+	XPGatheredForNextLevel = XP - xpToCurrentLevel;
+	XPRequiredForNextLevel = Level * XP_INCREMENT;
+}
+// XP SYSTEM FUNCTIONS END
+
 //funcao tick
 event PlayerTick(float DeltaTime)
 {
         Super.PlayerTick(DeltaTime);
+        
+        if(bLeftMousePressed)
+        {
+
+        }
         
         if(bRightMousePressed)
 	{
@@ -66,7 +198,6 @@ event PlayerTick(float DeltaTime)
 //Exec function correspondente ao binding StartFire do botao direito e esquerdo quando apertados
 exec function StartFire(optional byte FireModeNum)
 {
-
 	if(isinstate('MoveMouseClick'))
 	{
 		PopState(true); //removes all states
@@ -88,7 +219,7 @@ exec function StartFire(optional byte FireModeNum)
 }
 
 //Exec function correspondente ao binging StopFire do botao esquerdo e direito quando soltos
-simulated function Stopfire(optional byte FiremodeNum )
+exec function Stopfire(optional byte FiremodeNum )
 {
 	if(bLeftMousePressed && FiremodeNum == 0)
 	{
@@ -163,9 +294,9 @@ Begin:
                 `Log("MoveMousePressedAndHold at pos"@GetDestinationPosition());
                 MoveTo(GetDestinationPosition());
 
-				
+
 		}
-        
+
                 PopState();
 }
 
@@ -202,7 +333,7 @@ function PlayerMove(float deltatime)
 
 	DestinationXYLocation.X = GetDestinationPosition().X;
 	DestinationXYLocation.Y = GetDestinationPosition().Y;
-	
+
 	//face the right direction
 	LastLookLocation = DestinationXYLocation - PawnXYLocation;
 	Pawn.SetRotation(Rotator(DestinationXYLocation - PawnXYLocation));
@@ -225,4 +356,15 @@ DefaultProperties
         InputClass=class'LumDefGame.LumDefPlayerInput'
         //Definimos um valor padrao para a sensivilidade do click
         ClickSensitivity = 0.20f
+
+        // XP SYSTEM
+	Level = 1;
+	XP = 0;
+
+	// STATS SYSTEM
+	StatPoints = 0;
+	Strength = 0;
+	Dexterity = 0;
+	Intelligence = 0;
+	ManaPower = 0;
 }

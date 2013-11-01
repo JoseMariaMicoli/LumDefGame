@@ -9,6 +9,9 @@ var bool UsingScaleForm;
 //variavel pronta para cast de LumDefCursorGFx
 var LumDefCursorGFx LumDefCursorGFx;
 
+var bool PendingLeftPressed;
+var bool PendingLeftReleased;
+
 simulated event PostBeginPlay()
 {
         //Executamos o mesmo evento da classe mae
@@ -28,6 +31,84 @@ simulated event PostBeginPlay()
                         LumDefCursorGFx.Init(class'Engine'.static.GetEngine().GamePlayers[LumDefCursorGFx.LocalPlayerOwnerIndex]);
                 }
         }
+}
+
+function DrawBar(String  Title, float Value, float MaxValue,int X, int Y, int R, int G, int B) // Create our function used to draw bars
+{
+	local int PosX; //Declare our variable representing our postition on the X-axis
+	local int BarSizeX; //Declare our variable representing the size of our bar
+
+	PosX = X; //Where we should draw the rectangle
+	BarSizeX = 300 * FMin(Value / MaxValue, 1); // size of active rectangle (change 300 to however big you want your bar to be)
+ 
+	//Displays active rectangle
+	Canvas.SetPos(PosX,Y);
+	Canvas.SetDrawColor(R, G, B, 200);
+	Canvas.DrawRect(BarSizeX, 12);
+
+	//Displays empty rectangle
+	Canvas.SetPos(BarSizeX+X,Y);
+	Canvas.SetDrawColor(255, 255, 255, 80);
+	Canvas.DrawRect(300 - BarSizeX, 12); //Change 300 to however big you want your bar to be
+
+	//Draw our title
+	Canvas.SetPos(PosX+300+5, Y); //Change 300 to however big your bar is
+	Canvas.SetDrawColor(R, G, B, 200);
+	Canvas.Font = class'Engine'.static.GetSmallFont();
+	Canvas.DrawText(Title);
+
+} 
+
+// Unordered Functions Called Elsewhere
+function CheckViewPortAspectRatio()
+{
+        local vector2D ViewportSize;
+	local bool bIsWideScreen;
+        local PlayerController PC;
+
+        foreach LocalPlayerControllers(class'PlayerController', PC)
+	{
+		LocalPlayer(PC.Player).ViewportClient.GetViewportSize(ViewportSize);
+		break;
+	}
+        
+        bIsWideScreen = (ViewportSize.Y > 0.f) && (ViewportSize.X/ViewportSize.Y > 1.7);
+
+        if ( bIsWideScreen )
+	{
+		RatioX = SizeX / 1280.f;
+	        RatioY = SizeY / 720.f;
+	}
+}
+
+
+function DrawHud()
+{
+	local LumDefPlayerController PC;
+	PC = LumDefPlayerController(PlayerOwner);
+
+	CheckViewPortAspectRatio();
+
+	//If player is not dead or spectating... ( you could also use DrawLivingHud() )
+	if ( !PlayerOwner.IsDead() )
+	{
+
+
+
+		DrawBar("Stat Points:"@PC.StatPoints,PC.StatPoints,PC.StatPoints,20,600,80,80,80); // Stat Points Unspent
+
+		DrawBar("Strength:"@PC.Strength,PC.Strength,PC.Strength,20,480,80,80,80); // Total Strength
+		DrawBar("Dexterity:"@PC.Dexterity,PC.Dexterity,PC.Dexterity,20,500,80,80,80); // Total Dexterity
+		DrawBar("Intelligence:"@PC.Intelligence,PC.Intelligence,PC.Intelligence,20,520,80,80,80); // Total Intelligence
+		DrawBar("ManaPower:"@PC.ManaPower,PC.ManaPower,PC.ManaPower,20,540,80,80,80); //Total ManaPower
+
+		DrawBar("Health:"@PlayerOwner.Pawn.Health$"%",PlayerOwner.Pawn.Health, PlayerOwner.Pawn.HealthMax,20,620,200,80,80); //...draw our health-bar
+		DrawBar("Level:"@PC.Level, PC.Level, PC.MAX_LEVEL ,20,640,80,80,80); //...and our level-bar
+		if ( PC.Level != PC.MAX_LEVEL ) //If our player hasn't reached the highest level...
+		{
+			DrawBar("XP:"@PC.XPGatheredForNextLevel$"/"$PC.XPRequiredForNextLevel, PC.XPGatheredForNextLevel, PC.XPRequiredForNextLevel, 20, 660, 80, 255, 80); //...draw our XP-bar
+		}
+	}
 }
 
 //evento que é chamado quando o HUD é destruido e se encarrega de fechar o ScaleForm Movie
@@ -116,6 +197,9 @@ event PostRender()
 	//Calcula o pawn eye location para debugar o raio e para verificar se a obstaculos no local clicado
 	LumDefPlayerController.PawnEyeLocation = Pawn(PlayerOwner.ViewTarget).Location +
 	Pawn(PlayerOwner.ViewTarget).EyeHeight * Vect(0,0,1);
+
+        //draw our hud
+	DrawHUD();
 
 	super.PostRender();
 }
