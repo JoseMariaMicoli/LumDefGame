@@ -8,6 +8,11 @@ var array< class <Inventory> > DefaultInventory;
 var SaveSystemString MySaveSystemString;
 var SCharacterData CharacterData;
 
+simulated function PostBeginPlay()
+{
+        Super.PostBeginPlay();
+        MySaveSystemString = new class'SaveSystemString';
+}
 
 // This function have the keyword exec, telling that we can call if from console commands
 exec function SaveMyCharacter(string FileName)
