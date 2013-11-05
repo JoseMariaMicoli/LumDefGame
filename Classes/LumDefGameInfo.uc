@@ -1,4 +1,4 @@
-class LumDefGameInfo extends GameInfo DependsOn(SaveSystemString)
+class LumDefGameInfo extends SimpleGame DependsOn(SaveSystemString)
         config(LumDef);
 
 //Create inventory
@@ -8,11 +8,17 @@ var array< class <Inventory> > DefaultInventory;
 var SaveSystemString MySaveSystemString;
 var SCharacterData CharacterData;
 
+// Variable which references the default pawn archetype stored within a package
+var() const archetype Pawn DefaultPawnArchetype;
+// Variable which references the default weapon archetype stored within a package
+var() const archetype Weapon DefaultWeaponArchetype;
+
 simulated function PostBeginPlay()
 {
         Super.PostBeginPlay();
         MySaveSystemString = new class'SaveSystemString';
 }
+
 
 // This function have the keyword exec, telling that we can call if from console commands
 exec function SaveMyCharacter(string FileName)
@@ -28,14 +34,25 @@ exec function LoadMyCharacter(string FileName)
     MySaveSystemString.LoadTheCharacter(FileName, CharacterData);
 }
 
-//Add default items to inventory of PlayerPawn
-function AddDefaultInventory( pawn PlayerPawn )
+event AddDefaultInventory(Pawn P)
 {
-    if(PlayerPawn.IsHumanControlled() )
-    {
-        PlayerPawn.CreateInventory(class'LumDefWeaponTeste',false);
-    }
+	local LumDefInventoryManager LumDefInventoryManager;
+
+	Super.AddDefaultInventory(P);
+
+	// Ensure that we have a valid default weapon archetype
+	if (DefaultWeaponArchetype != None)
+	{
+		// Get the inventory manager
+		LumDefInventoryManager = LumDefInventoryManager(P.InvManager);
+		if (LumDefInventoryManager != None)
+		{
+			// Create the inventory from the archetype
+			LumDefInventoryManager.CreateInventoryArchetype(DefaultWeaponArchetype, false);
+		}
+	}
 }
+
 
 // Function that is executed after each kill
 function ScoreKill(Controller Killer, Controller Other)
