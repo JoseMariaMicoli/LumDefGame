@@ -1,8 +1,27 @@
-class LumDefGameInfo extends GameInfo
+class LumDefGameInfo extends GameInfo DependsOn(SaveSystemString)
         config(LumDef);
 
 //Create inventory
-var array< class <Inventory> > DefaultInventory; 
+var array< class <Inventory> > DefaultInventory;
+
+//SaveSystem and CharacterData vars
+var SaveSystemString MySaveSystemString;
+var SCharacterData CharacterData;
+
+
+// This function have the keyword exec, telling that we can call if from console commands
+exec function SaveMyCharacter(string FileName)
+{
+    // Calling the function inside our save system, and passing our character to be saved
+    MySaveSystemString.SaveTheCharacter(FileName, CharacterData);
+}
+
+// Another exec function, now to load
+exec function LoadMyCharacter(string FileName)
+{
+    // Calling the function inside our save system, and passing our character that will hold the loaded data
+    MySaveSystemString.LoadTheCharacter(FileName, CharacterData);
+}
 
 //Add default items to inventory of PlayerPawn
 function AddDefaultInventory( pawn PlayerPawn )
